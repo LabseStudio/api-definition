@@ -79,7 +79,17 @@ Cela permet d'éviter d'avoir pour seule définition "Pluriel de ..." ou "3eme p
 
 ![Exemple de définition](assets/img/exemple-pluriel.jpg "Exemple de double définition")  
 
+## *** Déployer avec Docker ***
 
+```shell
+docker build -t remede-definition-api .
+```
+
+```shell
+docker run -p 8089:80 remede-definition-api
+```
+
+- Visiter [localhost:8089](http://localhost:8089)
 
 ## *** Langages et bibliothèques utilisés ***
 
