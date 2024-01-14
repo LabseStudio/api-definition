@@ -34,6 +34,12 @@ Les éléments extraits sont :
 
 * message d'erreur si le parsing a échoué
 
+**Features ajoutées par `Labse Software`**
+
+* les balises `a` sont remplacées par `reference` pour permettre un parsing customizé
+* exemples
+* étymologie
+
 ```javascript
 {
     "motWiki": "carpe",

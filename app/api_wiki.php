@@ -63,6 +63,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $nbNaturesGram = 0;         // Nb de natures grammaticales
     $resFin = [];               // tableau de résultat temp (résultat pour une classe grammaticale) 
     $genre = [];                // tableau de genre pour la classe "nom commun"
+    $etymologies = [];           // étymologie du mot
     /* ############################################################################################### */
    
     // Messsage si pas de page Wikitionnaire
@@ -183,12 +184,22 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         }
                     }
 
+                    // TODO: Ajouter la liste d'étymologie dans motWiki
+                    if (null != $html->find('dl')) {
+                        if (null != $html->find('dl dd')) {
+                            $list = $html->find('dl', 0);
+                            foreach ($list->find('dd') as $el) {
+                                $etymologies[] = $el->innertext;
+                            }
+                        }
+                    }
+//                                    $etymologie = ;
+
                     // On exclut les listes d'éthymologie
                     if(null != $html->find('ol', $ol_rang)){
                         if(null != $html->find('ol', $ol_rang)->find('li', 0)){
                             if(null != $html->find('ol', $ol_rang)->find('li', 0)->find('span', 0)){
                                 if($html->find('ol', $ol_rang)->find('li', 0)->find('span', 0)->plaintext == 'Linguistique'){
-                                    // TODO: Ajouter la liste d'étymologie dans motWiki
                                     $ol_rang++;
                                 }
                             }
@@ -235,7 +246,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 $sources = str_replace(['<span class="tiret">', '</span>'], ['', ''], $sourcesEl->innertext);
                             }
 
-                            // TODO: On ajoute l'exemple à la liste
+                            // On ajoute l'exemple à la liste
                             $exemples[] = [
                                 "contenu" => $contenu,
                                 "sources" => $sources
@@ -468,6 +479,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $data["url_credits"]=$url_credits;
     $data["nature"]=$naturesGram;
     $data["genre"]=$genre;
+    $data["etymologies"]=$etymologies;
     $data["natureDef"]=$resfinal;
 
     // Encodage du tableau au format JSON
