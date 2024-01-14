@@ -188,8 +188,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         if(null != $html->find('ol', $ol_rang)->find('li', 0)){
                             if(null != $html->find('ol', $ol_rang)->find('li', 0)->find('span', 0)){
                                 if($html->find('ol', $ol_rang)->find('li', 0)->find('span', 0)->plaintext == 'Linguistique'){
+                                    // TODO: Ajouter la liste d'étymologie dans motWiki
                                     $ol_rang++;
-
                                 }
                             }
                         }
