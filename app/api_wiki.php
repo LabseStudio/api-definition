@@ -211,13 +211,36 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     $str2='';
                     $ref='';
                     // On créer une liste d'exemples
-                    $exemples[] = [];
+                    $exemples = [];
 
                     // On détermine les <ul> relatives aux exemples et on rempli la liste $exemples
                     $html3 = new simple_html_dom();
                     $html3->load($tete);
                     foreach($html3->find('ul') as $ul){
-                        $exemples[] = $ul->innertext;
+                        // On les exemples
+                        foreach($html3->find('li') as $li){
+                            // On récupère le contenu de l'exemple (li i) puis la source (li.sources, sans le span.tiret)
+                            $contenu = $li->find('i', 0)->innertext;
+
+                            // On supprime le tiret
+                            $tiret = $li->find('span.tiret', 0);
+                            if (null != $tiret) {
+                                $tiret->innertext = "";
+                            }
+
+                            // On garde les sources
+                            $sourcesEl = $li->find('span.sources', 0);
+                            $sources = "";
+                            if (null != $sourcesEl) {
+                                $sources = str_replace(['<span class="tiret">', '</span>'], ['', ''], $sourcesEl->innertext);
+                            }
+
+                            // TODO: On ajoute l'exemple à la liste
+                            $exemples[] = [
+                                "contenu" => $contenu,
+                                "sources" => $sources
+                            ];
+                        }
                         $ul->innertext="";
                     }
 
@@ -411,10 +434,11 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     }
                     $ol_rang += $nbArray;
 
-                    // Les exemples sont ajoutés au tableau resFin
-                    $resFin[] = $exemples;
                     // Le résultat de la classe grammaticale z $resTT est ajouté au tab resFinal
-                    $resfinal[$z][]=$resFin;
+                    $resfinal[$z][] = $resFin;
+
+                    // Les exemples sont ajoutés au tableau resFinal
+                    $resfinal[$z][] = $exemples;
 
                 // Si on ne trouve pas de liste ol dans la classe grammaticale z
                 }else{
