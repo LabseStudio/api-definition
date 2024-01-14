@@ -230,6 +230,11 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     foreach($html3->find('ul') as $ul){
                         // On les exemples
                         foreach($html3->find('li') as $li){
+                            // Si le wiki propose d'ajouter un exemple, on passe
+                            if (null != $li->find('a', 0)) {
+                                if ($li->find('a', 0) ->innertext == 'Ajouter un exemple') continue;
+                            }
+
                             // On récupère le contenu de l'exemple (li i) puis la source (li.sources, sans le span.tiret)
                             $contenu = $li->find('i', 0)->innertext;
 
