@@ -1,5 +1,12 @@
 # API Dictionnaire Wiktionnaire
 
+> [!NOTE]
+> Ce dépôt est un fork de [FredGainza/api-definition](https://github.com/FredGainza/api-definition).
+> Il a pour but de modifier cette API pour qu'elle soit utilisée par [Remède](https://github.com/camarm-dev/remede)
+
+> [!IMPORTANT]
+> Pour citer ce projet, veuillez respecter la [licence](#-license-) et créditer "adaptation par `Labse Software` du projet original de `Fred Gainza`"
+
 ![Badge KoPaTiK](https://img.shields.io/badge/KoPaTiK-Agency-blue "Badge KoPaTiK")
 
 API qui permet d'obtenir, via le [Wiktionnaire](https://fr.wiktionary.org), la définition des termes passés en input.
@@ -29,40 +36,61 @@ Les éléments extraits sont :
 
 ```javascript
 {
-  "motWiki": "carpe",
-  "error": "",
-  "direct_link": "https://fr.wiktionary.org/wiki/carpe",
-  "url_img": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Common_carp.jpg",
-  "legende_img": "",
-  "url_credits": "https://commons.wikimedia.org/wiki/File:Common_carp.jpg?uselang=fr",
-  "nature": [
-    "Nom commun 1",
-    "Nom commun 2"
-  ],
-  "genre": [
-    [
-      "Nom commun 1",
-      "féminin"
+    "motWiki": "carpe",
+        "error": "",
+        "direct_link": "https://fr.wiktionary.org/wiki/carpe",
+        "url_img": "",
+        "legende_img": "",
+        "url_credits": "",
+        "nature": [
+        "Nom commun 1",
+        "Nom commun 2"
     ],
-    [
-      "Nom commun 2",
-      "masculin"
-    ]
-  ],
-  "natureDef": [
-    [
-      {
-        "1": "(Zoologie) Poisson d’eau douce, de taille moyenne, originaire d'Asie (Chine surtout), de la famille des cyprinidés (Cyprinidae), comestible. ",
-        "2": "(Cuisine) Chair cuisinée de ce poisson.",
-        "3": "(Zoologie) Variante de carpe commune (poisson). "
-      }
+        "genre": [
+        [
+            "Nom commun 1",
+            "féminin"
+        ],
+        [
+            "Nom commun 2",
+            "masculin"
+        ]
     ],
-    [
-      {
-        "1": "(Anatomie) Nom générique des huit petits os du poignet. "
-      }
+        "natureDef": [
+        [
+            {
+                "1": "(Zoologie) Poisson d’eau douce, de taille moyenne, originaire d'Asie (Chine surtout), de la famille des cyprinidés (Cyprinidae), comestible. ",
+                "2": "(Cuisine) Chair cuisinée de ce poisson. ",
+                "3": "(Zoologie) Variante de carpe commune (poisson). "
+            },
+            [
+                {
+                    "contenu": "(<span title=\"La zoologie est l’étude des animaux.\">Zoologie</span>)",
+                    "sources": "(Franck Bouysse, <i>Grossir le ciel</i>, 2015, première partie, chapitre 8)"
+                },
+                {
+                    "contenu": "Il pêchait parfois dans le canal situé au-dessus du moulin, alimenté par la rivière, dans les grands calmes où les rotengles, les poissons-chats et les <b>carpes</b> venaient se nourrir de grains concassés en balançant leurs flancs dans la lumière.",
+                    "sources": "(Franck Bouysse, <i>Grossir le ciel</i>, 2015, première partie, chapitre 8)"
+                },
+                // Autres exemples réduits
+            ]
+        ],
+        [
+            {
+                "1": "(Anatomie) Nom générique des huit petits os du poignet. "
+            },
+            [
+                {
+                    "contenu": "(<span title=\"L’anatomie est la description structurelle du corps.\" id=\"fr-anatomie\">Anatomie</span>)",
+                    "sources": "(Collectif, <i>Abattage et Transformation des viandes de boucherie: Les produits élaborés à base de viande</i>, Educagri Editions, 2001, page 15)"
+                },
+                {
+                    "contenu": "Pièce de l'avant, la raquette a comme base osseuse les <b>carpes</b>, le radius, le cubitus, l'humérus, le scapulum.",
+                    "sources": "(Collectif, <i>Abattage et Transformation des viandes de boucherie: Les produits élaborés à base de viande</i>, Educagri Editions, 2001, page 15)"
+                }
+            ]
+        ]
     ]
-  ]
 }
 ```  
 
