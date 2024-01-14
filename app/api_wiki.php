@@ -210,11 +210,14 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     $str='';
                     $str2='';
                     $ref='';
+                    // On créer une liste d'exemples
+                    $exemples[] = [];
 
-                    // On détermine les <ul> relatives aux exemples
+                    // On détermine les <ul> relatives aux exemples et on rempli la liste $exemples
                     $html3 = new simple_html_dom();
                     $html3->load($tete);
                     foreach($html3->find('ul') as $ul){
+                        $exemples[] = $ul->innertext;
                         $ul->innertext="";
                     }
 
@@ -408,6 +411,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     }
                     $ol_rang += $nbArray;
 
+                    // Les exemples sont ajoutés au tableau resFin
+                    $resFin[] = $exemples;
                     // Le résultat de la classe grammaticale z $resTT est ajouté au tab resFinal
                     $resfinal[$z][]=$resFin;
 
