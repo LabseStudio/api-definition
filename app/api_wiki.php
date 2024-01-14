@@ -30,10 +30,10 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         return $donnees;
     }
 
-    // Fonction pour enlever certains tags (ne pas enlever <a></a>)
+    // Fonction pour enlever certains tags REMPLACE <a></a> PAR <reference></reference>: permettre de rediriger les mots Remède ainsi que les autres pages.
     function enleveTagsPerso($chaine) {
-        $search  = array('<i>', '</i>', '<ol>', '</ol>', '<li>', '</li>', '<pre>', '</pre>');
-        $replace = array('', '', '', '', '', '', '', '');
+        $search  = array('<i>', '</i>', '<ol>', '</ol>', '<li>', '</li>', '<pre>', '</pre>', '<a>', '</a>');
+        $replace = array('', '', '', '', '', '', '', '', '<reference>', '</reference>');
 
         $chaine = str_replace($search, $replace, $chaine);
         return $chaine; 
