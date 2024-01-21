@@ -184,16 +184,19 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         }
                     }
 
-                    // TODO: Ajouter la liste d'étymologie dans motWiki
+                    // On ajoute les etymologies dans la liste
                     if (null != $html->find('dl')) {
                         if (null != $html->find('dl dd')) {
                             $list = $html->find('dl', 0);
                             foreach ($list->find('dd') as $el) {
-                                $etymologies[] = $el->innertext;
+                                // TODO: mettre juste l'etymologie
+//                                "Du latin <i><bdi lang=\"la\" class=\"lang-la\"><a href=\"/wiki/remedium#la\" title=\"remedium\">remĕdium</a></bdi></i>."
+                                $contenu = $el->innertext;
+
+                                $etymologies[] = $contenu;
                             }
                         }
                     }
-//                                    $etymologie = ;
 
                     // On exclut les listes d'éthymologie
                     if(null != $html->find('ol', $ol_rang)){
@@ -228,15 +231,19 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     $html3 = new simple_html_dom();
                     $html3->load($tete);
                     foreach($html3->find('ul') as $ul){
-                        // On les exemples
-                        foreach($html3->find('li') as $li){
+                        // On itère les exemples
+                        foreach($ul->find('li') as $li){
                             // Si le wiki propose d'ajouter un exemple, on passe
                             if (null != $li->find('a', 0)) {
                                 if ($li->find('a', 0) ->innertext == 'Ajouter un exemple') continue;
                             }
 
-                            // On récupère le contenu de l'exemple (li i) puis la source (li.sources, sans le span.tiret)
-                            $contenu = $li->find('i', 0)->innertext;
+                            // On récupère le contenu de l'exemple (tout le contenu du li sans la source) puis la source (li.sources, sans le span.tiret)
+                            $contenu = $li;
+                            $sourcesEl = $contenu->find('.sources', 0);
+                            if (null != $sourcesEl) {
+                                $sourcesEl->outertext = '';
+                            }
 
                             // On supprime le tiret
                             $tiret = $li->find('span.tiret', 0);
@@ -248,12 +255,17 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                             $sourcesEl = $li->find('span.sources', 0);
                             $sources = "";
                             if (null != $sourcesEl) {
+                                // On supprime les liens
+                                $anchors = $sourcesEl->find('a');
+                                foreach ($anchors as $a) {
+                                    $a->outertext = $a->innertext;
+                                }
                                 $sources = str_replace(['<span class="tiret">', '</span>'], ['', ''], $sourcesEl->innertext);
                             }
 
                             // On ajoute l'exemple à la liste
                             $exemples[] = [
-                                "contenu" => $contenu,
+                                "contenu" => $contenu->innertext,
                                 "sources" => $sources
                             ];
                         }
