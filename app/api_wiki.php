@@ -35,7 +35,35 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         $search  = array('<i>', '</i>', '<ol>', '</ol>', '<li>', '</li>', '<pre>', '</pre>', '<a', '</a>');
         $replace = array('', '', '', '', '', '', '', '', '<reference', '</reference>');
 
-        $chaine = str_replace($search, $replace, $chaine);
+        return str_replace($search, $replace, $chaine);
+    }
+
+    function isNotItalicOrBoldTag($el) {
+        return (!str_starts_with($el->outertext, '<i>') && !str_starts_with($el->outertext, '<b>')) && str_starts_with($el->outertext, '<');
+    }
+
+    function isItalicOrBold($el) {
+        return str_starts_with($el->outertext, '<i>') || str_starts_with($el->outertext, '<b>');
+    }
+
+    // Enlève tous les tags sauf les <i> et <b>
+    function clearTags($chaine) {
+        // On itère tous les tags
+        $all_tags = $chaine->find('*');
+        foreach ($all_tags as $tag) {
+            // On passe si c'est un <i> ou <b>
+            if (isItalicOrBold($tag)) {
+                continue;
+            }
+            $tag->outertext = $tag->innertext;
+        }
+
+//        // On récupère les tags restants
+        $all_tags = array_filter($chaine->find('*'), "isNotItalicOrBoldTag");
+        // Récursive pour tout supprimer
+        if (count($all_tags) > 0) {
+            $chaine = clearTags($chaine);
+        }
         return $chaine;
     }
 
@@ -189,26 +217,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         if (null != $html->find('dl dd')) {
                             $list = $html->find('dl', 0);
                             foreach ($list->find('dd') as $el) {
-                                // On supprime les tags <bdi>
-                                $bdis = $el->find('bdi');
-                                foreach ($bdis as $bdi) {
-                                    $bdi->outertext = $bdi->innertext;
-                                }
-
-                                // On recharge l'html pour qu'il soit bien parsé
-                                $html_contenu = new simple_html_dom();
-                                $html_contenu->load($el->outertext);
-                                $reloadedEl = $html_contenu->find('dd', 0);
-
-                                // On supprime les liens
-                                $anchors = $reloadedEl->find('a');
-                                foreach ($anchors as $a) {
-                                    $a->outertext = $a->innertext;
-                                }
-
-                                $contenu = $reloadedEl->innertext;
-
-                                $etymologies[] = $contenu;
+                                // On enlève les tags inutiles
+                                $contenu = clearTags($el);
+                                $etymologies[] = $contenu->innertext;
                             }
                         }
                     }
@@ -280,7 +291,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                             // On ajoute l'exemple à la liste
                             $exemples[] = [
-                                "contenu" => $contenu->innertext,
+                                "contenu" => clearTags($contenu)->innertext,
                                 "sources" => $sources
                             ];
                         }
