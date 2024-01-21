@@ -189,9 +189,24 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         if (null != $html->find('dl dd')) {
                             $list = $html->find('dl', 0);
                             foreach ($list->find('dd') as $el) {
-                                // TODO: mettre juste l'etymologie
-//                                "Du latin <i><bdi lang=\"la\" class=\"lang-la\"><a href=\"/wiki/remedium#la\" title=\"remedium\">remĕdium</a></bdi></i>."
-                                $contenu = $el->innertext;
+                                // On supprime les tags <bdi>
+                                $bdis = $el->find('bdi');
+                                foreach ($bdis as $bdi) {
+                                    $bdi->outertext = $bdi->innertext;
+                                }
+
+                                // On recharge l'html pour qu'il soit bien parsé
+                                $html_contenu = new simple_html_dom();
+                                $html_contenu->load($el->outertext);
+                                $reloadedEl = $html_contenu->find('dd', 0);
+
+                                // On supprime les liens
+                                $anchors = $reloadedEl->find('a');
+                                foreach ($anchors as $a) {
+                                    $a->outertext = $a->innertext;
+                                }
+
+                                $contenu = $reloadedEl->innertext;
 
                                 $etymologies[] = $contenu;
                             }
