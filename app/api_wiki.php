@@ -48,6 +48,16 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
     // Enlève tous les tags sauf les <i> et <b>
     function clearTags($chaine) {
+
+        // On supprime les sources si c'est un exemple
+        $sourcesEl = $chaine->find('.sources', 0);
+        if (null != $sourcesEl) {
+            $sourcesEl->outertext = '';
+            $inner = $chaine->innertext;
+            $chaine = new simple_html_dom();
+            $chaine->load($inner);
+        }
+
         // On itère tous les tags
         $all_tags = $chaine->find('*');
         foreach ($all_tags as $tag) {
@@ -264,12 +274,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 if ($li->find('a', 0) ->innertext == 'Ajouter un exemple') continue;
                             }
 
+                            // TODO: why sourceEl is not deleted ?
                             // On récupère le contenu de l'exemple (tout le contenu du li sans la source) puis la source (li.sources, sans le span.tiret)
                             $contenu = $li;
-                            $sourcesEl = $contenu->find('.sources', 0);
-                            if (null != $sourcesEl) {
-                                $sourcesEl->outertext = '';
-                            }
 
                             // On supprime le tiret
                             $tiret = $li->find('span.tiret', 0);
