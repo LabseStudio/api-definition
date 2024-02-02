@@ -274,7 +274,6 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 if ($li->find('a', 0) ->innertext == 'Ajouter un exemple') continue;
                             }
 
-                            // TODO: why sourceEl is not deleted ?
                             // On récupère le contenu de l'exemple (tout le contenu du li sans la source) puis la source (li.sources, sans le span.tiret)
                             $contenu = $li;
 
