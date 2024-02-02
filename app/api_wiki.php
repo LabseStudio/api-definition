@@ -228,6 +228,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                             $list = $html->find('dl', 0);
                             foreach ($list->find('dd') as $el) {
                                 // On enlève les tags inutiles
+
+                                // Si le wiki propose d'ajouter une étymologie, on passe
+                                if (str_contains($el->innertext, 'Étymologie manquante ou incomplète')) continue;
                                 $contenu = clearTags($el);
                                 $etymologies[] = $contenu->innertext;
                             }
