@@ -7,7 +7,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     if(isset($data) && $data != ''){
         unset($data);
     }
-    
+
     // ############################################################
     //      TRAVAIL PREPARATOIRE
     // ############################################################
@@ -21,7 +21,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         print_r($x);
         echo '</pre>';
     }
-    
+
     // Fonction de validation des données
     function valid_donnees($donnees) {
         $donnees = trim($donnees);
@@ -39,14 +39,18 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     }
 
     function isNotItalicOrBoldTag($el) {
-        return (!str_starts_with($el->outertext, '<i>') && !str_starts_with($el->outertext, '<b>')) && str_starts_with($el->outertext, '<');
+        return (!str_starts_with($el->outertext, '<i>') && !str_starts_with($el->outertext, '<b>')) && str_starts_with($el->outertext, '<') && !isCustomTag($el);
     }
 
     function isItalicOrBold($el) {
         return str_starts_with($el->outertext, '<i>') || str_starts_with($el->outertext, '<b>');
     }
 
-    // Enlève tous les tags sauf les <i> et <b>
+    function isCustomTag($el) {
+        return str_starts_with($el->outertext, '<reference') || str_starts_with($el->outertext, '<phoneme');
+    }
+
+    // Enlève tous les tags sauf les <i>, <b> <reference et <phoneme>
     function clearTags($chaine) {
 
         // On supprime les sources si c'est un exemple
@@ -65,6 +69,10 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             if (isItalicOrBold($tag)) {
                 continue;
             }
+            // On passe si c'est un tag custom
+            if (isCustomTag($tag)) {
+                continue;
+            }
             $tag->outertext = $tag->innertext;
         }
 
@@ -74,6 +82,14 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         if (count($all_tags) > 0) {
             $chaine = clearTags($chaine);
         }
+        // Juste avant on clean les tags restant de leurs propriétés inutiles
+        return clearAttributes($chaine);
+    }
+
+    // Supprime toutes les attributs (title, alt ect...) sauf "href"
+    function clearAttributes($chaine) {
+        // TODO
+        // Garder juste le mot ou le phoneme dans le href
         return $chaine;
     }
 
@@ -99,11 +115,12 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $legende_img = '';          // légende de l'image
     $resfinal = [];             // tableau final des résultats
     $nbNaturesGram = 0;         // Nb de natures grammaticales
-    $resFin = [];               // tableau de résultat temp (résultat pour une classe grammaticale) 
+    $resFin = [];               // tableau de résultat temp (résultat pour une classe grammaticale)
     $genre = [];                // tableau de genre pour la classe "nom commun"
-    $etymologies = [];           // étymologie du mot
+    $etymologies = [];          // étymologies du mot
+    $plurals = [];              // les pluriels du mot
     /* ############################################################################################### */
-   
+
     // Messsage si pas de page Wikitionnaire
     if (IFilesExists("https://fr.wiktionary.org/wiki/".$motWiki)){
         $url = "https://fr.wiktionary.org/wiki/".$motWiki;
@@ -121,7 +138,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
         // Si il y a une ou des classes grammaticales
         if($nbNaturesGram != 0){
-            // On récupère le texte des classes grammaticales   
+            // On récupère le texte des classes grammaticales
             foreach($html->find('h3 span.titredef[id^=fr-]') as $v){
                 $naturesGram[] = $v->plaintext;
             }
@@ -129,6 +146,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             // On récupère le genre pour la classe de "nom commun"
             $z=0;
             foreach($naturesGram as $i => $class){
+                // TODO différencier genre / classe
                 if ((strpos($class, "commun") !== FALSE) && (strpos($class, "Forme") === FALSE)){
                     $x = $html->find('p span.ligne-de-forme', $z)->plaintext;
                     $genre[]=[$class, $x];
@@ -140,7 +158,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
             // s'il y a une image
             if(null!=$html->find('a.image',0)){
-                // On récupère l'url du creditial 
+                // On récupère l'url du creditial
                 if(null != $html->find('div.thumbinner', 0)){
                     if(null != $html->find('div.thumbinner', 0)->find('a.image', 0)){
                         if(null != $html->find('div.thumbinner', 0)->find('a.image', 0)->getAttribute('href')){
@@ -194,10 +212,48 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                             }
                         }
-                    }                      
+                    }
 
                 }
 
+            }
+            // ############################################################
+            //      PLURIELS DU MOT
+            // ############################################################
+            if (null != $html->find('.flextable.flextable-fr-mfsp', 0)) {
+                // Il a une table des pluriels
+                $table = $html->find('.flextable.flextable-fr-mfsp', 0);
+                // Les lignes avec les pluriels, en ignorant la première qui est l'en-tête de la table
+                $rows = array_slice($table->find('tr'), -2, 2);
+
+                if (null != $rows) {
+                    $to_replace = ['<a href="/wiki/Annexe:Prononciation/fran%C3%A7ais" title="Annexe:Prononciation/français"><span class="API" title="Prononciation API">', '</span></a>', '<a', '</a>', '<br/>', '<br>', '<b>', '</b>', '<i>', '</i>'];
+                    $to_replace_by = ['<phoneme>', '</phoneme>', '<reference', '</reference>', '', '', '', '', '', ''];
+                    foreach ($rows as $row) {
+                        // Récupération singulier et pluriel et label si il y en a un
+                        $columns = $row->find('td');
+
+                        $htmlSingular = new simple_html_dom();
+                        $htmlSingular->load(str_replace($to_replace, $to_replace_by, array_slice($columns, -2, 1)[0]->innertext));
+                        $htmlPlural = new simple_html_dom();
+                        $htmlPlural->load(str_replace($to_replace, $to_replace_by, array_slice($columns, -1, 1)[0]->innertext));
+
+                        $singular = clearTags($htmlSingular);
+                        $plural = clearTags($htmlPlural);
+                        $label = "";
+
+                        // Il y a un label
+                        if (sizeof($columns) == 3) {
+                            $label = clearTags($columns[0])->plaintext;
+                        }
+
+                        $plurals[] = [
+                            "label" => utf8_encode($label),
+                            "singular" => utf8_encode($singular),
+                            "plural" => utf8_encode($plural)
+                        ];
+                    }
+                }
             }
 
 
@@ -217,7 +273,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         if(null != $html->find('div[id=mw-content-text]', 0)->find('dl', 0)){
                             if(null != $html->find('div[id=mw-content-text]', 0)->find('dl', 0)->find('ol', 0)){
                                 $nbOl = count($html->find('div[id=mw-content-text]', 0)->find('dl', 0)->find('ol'));
-                                $ol_rang = $nbOl; 
+                                $ol_rang = $nbOl;
                             }
                         }
                     }
@@ -254,7 +310,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                 if($z != 0){
                     $ol_rang++;
                 }
-                
+
                 // Parse la 1ère liste
                 $tete=$html->find('ol', $ol_rang);
 
@@ -308,7 +364,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     }
 
                     // Cas particulier des Formes de verbes :
-                    // - on détermine le verbe à l'infinitif et on crée un lien vers celui-ci 
+                    // - on détermine le verbe à l'infinitif et on crée un lien vers celui-ci
                     if($naturesGram[$z] == "Forme de verbe"){
                         $needLink = false;
                         $isPluriel = false;
@@ -324,7 +380,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     }
 
                     // Cas particulier des autres formes :
-                    // - on détermine si c'est le pluriel qui est défini : dans ce cas, on crée un lien vers le mot au singulier 
+                    // - on détermine si c'est le pluriel qui est défini : dans ce cas, on crée un lien vers le mot au singulier
                     if($naturesGram[$z] != "Forme de verbe"){
                         $isPluriel = false;
                         $plurielTest = $html3->find('li', 0);
@@ -333,7 +389,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                         foreach($html3Tab as $mot){
                             if($mot == "Pluriel" || $mot == "pluriel" || (strpos($text, "Féminin singulier") !== FALSE)){
-                                $linkSingulier = $html3->find('a', 0); 
+                                $linkSingulier = $html3->find('a', 0);
                                 $singulier = $linkSingulier->title;
                                 $linkSingulier->href = "https://fr.wiktionary.org/wiki/".$singulier;
                                 $linkSingulier->id = "complement_genre";
@@ -346,9 +402,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     // ############################################################
                     //      METHODE UTILISEE :
                     //          - on va déterminer toutes les <li> dans les <ol> qui restent;
-                    //          - va falloir repérer les sous listes, les <ol> présentes dans 
+                    //          - va falloir repérer les sous listes, les <ol> présentes dans
                     //      les <ol> que l'on parse.
-                    //      
+                    //
                     //
                     //      Méthode choisie : faire la différence entre :
                     //
@@ -363,9 +419,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     //          </ol>
                     //      </li>
                     //
-                    //         ** tab des li des sous-listes <ol>     
+                    //         ** tab des li des sous-listes <ol>
                     //
-                    //      
+                    //
                     // ############################################################
 
 
@@ -409,7 +465,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 $resTep[]=$li;
                             }
                         }
-                        
+
                     }
 
                     // Si "ol" dans "li", on fait la différence
@@ -429,7 +485,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     /* ###################################################
                         On organise de la la façon suivante:
                             si une sous-liste "ol" : [intitulé, li_1, li_2] par exemple
-                            si pas de sous liste : li 
+                            si pas de sous liste : li
                     */ ###################################################
 
                     if ($nbEl == 1){
@@ -489,9 +545,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 $resFin[]=[array_slice($restTTUnique, $k+1)];
                             }else{
 
-                                $resFin[]=[array_keys(array_flip($resTT))];        
-                            }       
-                            
+                                $resFin[]=[array_keys(array_flip($resTT))];
+                            }
+
                         }
 
                     }
@@ -514,8 +570,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         }else{
             $error = "Un problème est survenu lors de la recherche de la définition du mot ".strtoupper($motWiki);
         }
-        
-    // Si le mot saisi n'est pas présent sur Wikitionnaire    
+
+    // Si le mot saisi n'est pas présent sur Wikitionnaire
     } else {
         $error = "Le mot ".strtoupper($motWiki). " n'apparait pas dans notre dictionnaire de référence, le Wiktionary.";
     }
@@ -532,6 +588,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $data["nature"]=$naturesGram;
     $data["genre"]=$genre;
     $data["etymologies"]=$etymologies;
+    $data["plurals"]=$plurals;
     $data["natureDef"]=$resfinal;
 
     // Encodage du tableau au format JSON
