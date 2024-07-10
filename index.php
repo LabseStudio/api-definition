@@ -59,6 +59,9 @@
         </div>
       </div>
 
+      <div class="banner" style="text-align: center; margin: auto">
+        Cette version de <a href="https://gt">API Dictionnaire Wiktionnaire</a> est conçue pour <a href="https://remede.camarm.fr">Remède</a>.
+      </div>
       <!-- ############################################################### -->
       <!-- START - SECTION FORMULAIRE -->
       <!-- ############################################################### -->
