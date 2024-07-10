@@ -110,7 +110,6 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             }
             // Si href non-vide et autre qu'une annexe, on remet l'attr href
             if ('' != $href && !isUselessLink($href)) $tag->setAttribute('href', str_replace($to_replace, $to_replace_by, $href));
-//            if ('' != $href || !isUselessLink($href)) $tag->setAttribute('href', $href);
         }
 
         // On supprime le tag custom <reference> si il n'a pas d'attribut href
@@ -176,10 +175,9 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             // On récupère le genre pour la classe de "nom commun"
             $z=0;
             foreach($naturesGram as $i => $class){
-                // TODO différencier genre / classe
                 if ((strpos($class, "commun") !== FALSE) && (strpos($class, "Forme") === FALSE)){
                     $x = $html->find('p span.ligne-de-forme', $z)->plaintext;
-                    $genre[]=[$class, $x];
+                    $genre[]=$x;
                     $z++;
                 }else{
                     $genre[]=$class;
