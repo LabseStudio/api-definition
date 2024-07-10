@@ -35,11 +35,13 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         $search  = array('<i>', '</i>', '<ol>', '</ol>', '<li>', '</li>', '<pre>', '</pre>', '<a', '</a>');
         $replace = array('', '', '', '', '', '', '', '', '<reference', '</reference>');
 
-        return str_replace($search, $replace, $chaine);
+        $chaine_html = new simple_html_dom();
+        $chaine_html->load(str_replace($search, $replace, $chaine));
+        return clearTags($chaine_html)->outertext;
     }
 
-    function isNotItalicOrBoldTag($el) {
-        return (!str_starts_with($el->outertext, '<i>') && !str_starts_with($el->outertext, '<b>')) && str_starts_with($el->outertext, '<') && !isCustomTag($el);
+    function isBannedTag($el) {
+        return (!str_starts_with($el->outertext, '<i>') && !str_starts_with($el->outertext, '<b>') && !isCustomTag($el)) && str_starts_with($el->outertext, '<');
     }
 
     function isItalicOrBold($el) {
@@ -48,6 +50,10 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
     function isCustomTag($el) {
         return str_starts_with($el->outertext, '<reference') || str_starts_with($el->outertext, '<phoneme');
+    }
+
+    function isUselessLink($link) {
+        return str_starts_with($link, 'https://fr.wiktionary.org/wiki/Annexe') || str_starts_with($link, '/wiki/Annexe');
     }
 
     // Enlève tous les tags sauf les <i>, <b> <reference et <phoneme>
@@ -76,10 +82,11 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             $tag->outertext = $tag->innertext;
         }
 
-//        // On récupère les tags restants
-        $all_tags = array_filter($chaine->find('*'), "isNotItalicOrBoldTag");
+        $chaine->load($chaine->save());
+        // On récupère les tags restants
+        $all_tags = array_filter($chaine->find('*'), "isBannedTag");
         // Récursive pour tout supprimer
-        if (count($all_tags) > 0) {
+        if (sizeof($all_tags) > 0) {
             $chaine = clearTags($chaine);
         }
         // Juste avant on clean les tags restant de leurs propriétés inutiles
@@ -88,8 +95,31 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
     // Supprime toutes les attributs (title, alt ect...) sauf "href"
     function clearAttributes($chaine) {
-        // TODO
-        // Garder juste le mot ou le phoneme dans le href
+        // Garder juste le mot dans le href
+        // Pour cela on remplace les /wiki/ et autres urls par une chaine vide
+        $to_replace = ['wiki/', 'https://fr.wiktionary.org', '/'];
+        $to_replace_by = ['', '', ''];
+
+        // On itère tous les tags
+        foreach ($chaine->find('*') as $tag) {
+            // On sauvegarde l'href, sans l'ancre, et on lui applique des modifs
+            $href = explode('#', $tag->getAttribute('href'))[0];
+            // On itère tous les attributs de l'élement
+            foreach ($tag->getAllAttributes() as $attr => $val) {
+                $tag->removeAttribute($attr);
+            }
+            // Si href non-vide et autre qu'une annexe, on remet l'attr href
+            if ('' != $href && !isUselessLink($href)) $tag->setAttribute('href', str_replace($to_replace, $to_replace_by, $href));
+//            if ('' != $href || !isUselessLink($href)) $tag->setAttribute('href', $href);
+        }
+
+        // On supprime le tag custom <reference> si il n'a pas d'attribut href
+        $all_references = $chaine->find('reference');
+        foreach ($all_references as $tag) {
+            if (null == $tag->getAttribute('href')) $tag->outertext = $tag->innertext;
+        }
+
+        $chaine->load($chaine->save());
         return $chaine;
     }
 
@@ -227,8 +257,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                 $rows = array_slice($table->find('tr'), -2, 2);
 
                 if (null != $rows) {
-                    $to_replace = ['<a href="/wiki/Annexe:Prononciation/fran%C3%A7ais" title="Annexe:Prononciation/français"><span class="API" title="Prononciation API">', '</span></a>', '<a', '</a>', '<br/>', '<br>', '<b>', '</b>', '<i>', '</i>'];
-                    $to_replace_by = ['<phoneme>', '</phoneme>', '<reference', '</reference>', '', '', '', '', '', ''];
+                    $to_replace = ['<a href="/wiki/Annexe:Prononciation/fran%C3%A7ais" title="Annexe:Prononciation/français"><span class="API" title="Prononciation API">', '</span></a>', '<br/>', '<br>', '<b>', '</b>', '<i>', '</i>', '<a', '</a>'];
+                    $to_replace_by = ['<phoneme>', '</phoneme>', '', '', '', '', '', '', '<reference', '</reference>'];
                     foreach ($rows as $row) {
                         // Récupération singulier et pluriel et label si il y en a un
                         $columns = $row->find('td');
@@ -238,19 +268,19 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         $htmlPlural = new simple_html_dom();
                         $htmlPlural->load(str_replace($to_replace, $to_replace_by, array_slice($columns, -1, 1)[0]->innertext));
 
-                        $singular = clearTags($htmlSingular);
-                        $plural = clearTags($htmlPlural);
+                        $singular = clearTags($htmlSingular)->innertext;
+                        $plural = clearTags($htmlPlural)->innertext;
                         $label = "";
 
                         // Il y a un label
-                        if (sizeof($columns) == 3) {
-                            $label = clearTags($columns[0])->plaintext;
+                        if (null != $row->find('th', 0)) {
+                            $label = clearTags($row->find('th', 0))->plaintext;
                         }
 
                         $plurals[] = [
-                            "label" => utf8_encode($label),
-                            "singular" => utf8_encode($singular),
-                            "plural" => utf8_encode($plural)
+                            "label" => $label,
+                            "singular" => $singular,
+                            "plural" => $plural
                         ];
                     }
                 }
@@ -287,8 +317,10 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                                 // Si le wiki propose d'ajouter une étymologie, on passe
                                 if (str_contains($el->innertext, 'Étymologie manquante ou incomplète')) continue;
-                                $contenu = clearTags($el);
-                                $etymologies[] = $contenu->innertext;
+                                $htmlEl = new simple_html_dom();
+                                $htmlEl->load($el->innertext);
+                                $contenu = enleveTagsPerso($htmlEl);
+                                $etymologies[] = $contenu;
                             }
                         }
                     }
