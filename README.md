@@ -36,9 +36,11 @@ Les éléments extraits sont :
 
 **Features ajoutées par `Labse Software`**
 
-* les balises `a` sont remplacées par `reference` pour permettre un parsing customizé
+* les balises `a` sont remplacées par `reference`, et les références aux prononciations français par `phoneme` pour permettre un parsing customizé
 * exemples
 * étymologie
+* pluriels des mots
+* meilleur parsing avec la suppression de tous les tags inutiles
 
 ```javascript
 {
