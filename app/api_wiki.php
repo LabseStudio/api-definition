@@ -110,6 +110,11 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         foreach ($chaine->find('*') as $tag) {
             // On sauvegarde l'href, sans l'ancre, et on lui applique des modifs
             $href = explode('#', $tag->getAttribute('href'))[0];
+
+            // Si c'est un lien pou créer une page inexistante, on supprimer le lien.
+            $title = $tag->getAttribute('title');
+            if (str_contains($title, 'page inexistante')) $href = '';
+
             // On itère tous les attributs de l'élement
             foreach ($tag->getAllAttributes() as $attr => $val) {
                 $tag->removeAttribute($attr);
@@ -121,7 +126,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         // On supprime le tag custom <reference> si il n'a pas d'attribut href
         $all_references = $chaine->find('reference');
         foreach ($all_references as $tag) {
-            if (null == $tag->getAttribute('href')) $tag->outertext = $tag->innertext;
+            if (null == $tag->getAttribute('href') || '' == $tag->getAttribute('href') || 1 == $tag->getAttribute('href')) $tag->outertext = $tag->innertext;
         }
 
         if (!isset($chaine->load)) {
