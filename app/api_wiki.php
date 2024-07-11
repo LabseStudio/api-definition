@@ -82,7 +82,13 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             $tag->outertext = $tag->innertext;
         }
 
-        $chaine->load($chaine->save());
+        if (!isset($chaine->load)) {
+            $save_html = new simple_html_dom();
+            $save_html->load($chaine->outertext);
+            $chaine = $save_html;
+        } else {
+            $chaine->load($chaine->save());
+        }
         // On récupère les tags restants
         $all_tags = array_filter($chaine->find('*'), "isBannedTag");
         // Récursive pour tout supprimer
@@ -118,7 +124,13 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
             if (null == $tag->getAttribute('href')) $tag->outertext = $tag->innertext;
         }
 
-        $chaine->load($chaine->save());
+        if (!isset($chaine->load)) {
+            $save_html = new simple_html_dom();
+            $save_html->load($chaine->outertext);
+            $chaine = $save_html;
+        } else {
+            $chaine->load($chaine->save());
+        }
         return $chaine;
     }
 
