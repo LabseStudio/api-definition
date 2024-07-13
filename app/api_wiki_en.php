@@ -285,12 +285,24 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     // On détermine les <ul> relatives aux exemples et on rempli la liste $exemples
                     $html3 = new simple_html_dom();
                     $html3->load($tete);
+
+
+                    # On ajoute les exemples d'usage à la liste (traités différemment des "quotations", qui sont ajoutées si-dessous) et on les supprime pour qu'ils ne soient pas inclus dans la définition
+                    $usageEx = $html3->find('.h-usage-example', 0);
+                    if (null != $usageEx) {
+                        $exemples[] = [
+                            "contenu" => clearTags($usageEx)->innertext,
+                            "sources" => ""
+                        ];
+                        $usageEx->outertext = '';
+                    }
+
                     foreach($html3->find('ul') as $ul){
                         // On itère les exemples
                         foreach($ul->find('li') as $li){
                             // Si le wiki propose d'ajouter un exemple, on passe
                             if (null != $li->find('a', 0)) {
-                                if ($li->find('a', 0) ->innertext == 'Ajouter un exemple') continue;
+                                if ($li->find('a', 0) ->innertext == 'Add example') continue;
                             }
 
                             // On récupère le contenu de l'exemple (tout le contenu du li sans la source) puis la source (li.sources, sans le span.tiret)
@@ -314,7 +326,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 "sources" => $sources
                             ];
                         }
-                        $ul->innertext="";
+                        $ul->outertext="";
                     }
 
                     // Cas particulier des Formes de verbes :
