@@ -178,6 +178,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         // Parser l'ensemble de la page
         $html = new simple_html_dom();
         $html->load_file($url);
+        $found_plurals = [];
 
         $sectionTitleQuery = ".mw-heading [id^=Verb], .mw-heading [id^=Noun], .mw-heading [id^=Adjective], .mw-heading [id^=Adverb], .mw-heading [id^=Interjection], .mw-heading [id^=Preposition], .mw-heading [id^=Conjunction], .mw-heading [id^=Pronoun]";
 
@@ -188,54 +189,15 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         if($nbNaturesGram != 0){
             // On récupère le texte des classes grammaticales
             foreach($html->find($sectionTitleQuery) as $v){
+                if ($v->parent->next_sibling()->find('.headword', 0)->getAttribute('lang') != 'en') continue;
                 $naturesGram[] = $v->plaintext;
             }
+            $nbNaturesGram = count($naturesGram);
 
             // On récupère le genre pour la classe de "nom commun"
             $z=0;
             # Pas de genre en anglais, on met donc les natures
             $genre = $naturesGram;
-
-            // ############################################################
-            //      PLURIELS DU MOT
-            // ############################################################
-            // TODO
-            if (null != $html->find('.flextable.flextable-fr-mfsp', 0)) {
-                // Il a une table des pluriels
-                $table = $html->find('.flextable.flextable-fr-mfsp', 0);
-                // Les lignes avec les pluriels, en ignorant la première qui est l'en-tête de la table
-                $rows = array_slice($table->find('tr'), -2, 2);
-
-                if (null != $rows) {
-                    $to_replace = ['<a href="/wiki/Appendix:English_pronunciation" title="Appendix:English pronunciation"><span class="API" title="Prononciation API">', '</span></a>', '<br/>', '<br>', '<b>', '</b>', '<i>', '</i>', '<a', '</a>'];
-                    $to_replace_by = ['<phoneme>', '</phoneme>', '', '', '', '', '', '', '<reference', '</reference>'];
-                    foreach ($rows as $row) {
-                        // Récupération singulier et pluriel et label si il y en a un
-                        $columns = $row->find('td');
-
-                        $htmlSingular = new simple_html_dom();
-                        $htmlSingular->load(str_replace($to_replace, $to_replace_by, array_slice($columns, -2, 1)[0]->innertext));
-                        $htmlPlural = new simple_html_dom();
-                        $htmlPlural->load(str_replace($to_replace, $to_replace_by, array_slice($columns, -1, 1)[0]->innertext));
-
-                        $singular = clearTags($htmlSingular)->innertext;
-                        $plural = clearTags($htmlPlural)->innertext;
-                        $label = "";
-
-                        // Il y a un label
-                        if (null != $row->find('th', 0)) {
-                            $label = clearTags($row->find('th', 0))->plaintext;
-                        }
-
-                        $plurals[] = [
-                            "label" => $label,
-                            "singular" => $singular,
-                            "plural" => $plural
-                        ];
-                    }
-                }
-            }
-
 
             // ############################################################
             //      DEFINITIONS POUR CHAQUE CLASSE GRAMMATICALE
@@ -260,8 +222,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                     // On ajoute les etymologies dans la liste
                     // La section des étymologies est juste après le parent du titre de la section #Etymology
-                    if (null != $html->find('[id^=Etymology]', 0)) {
-                        $sections = $html->find('[id^=Etymology]');
+                    if (null != $html->find('#Etymology', 0)) {
+                        $sections = $html->find('#Etymology');
                         foreach ($sections as $sectionTitle) {
                             $etymologyContent = $sectionTitle->parent->next_sibling();
                             if (null != $etymologyContent) {
@@ -289,11 +251,31 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                     $ol_rang++;
                 }
 
+                // ############################################################
+                //      PLURIELS DU MOT
+                // ############################################################
+                if (null != $html->find('.Latn.form-of.lang-en.p-form-of')) {
+                    // Il y a des pluriels
+                    foreach ($html->find('.Latn.form-of.lang-en.p-form-of') as $el) {
+                        $plural = $el->plaintext;
+                        if (in_array($plural, $found_plurals)) continue;
+                        $found_plurals[] = $plural;
+                        $plurals[] = [
+                            "label" => "",
+                            "singular" => $motWiki,
+                            "plural" => $plural
+                        ];
+                    }
+                }
+
                 // Parse la 1ère liste
                 $tete=$html->find('ol', $ol_rang);
 
                 // Si on trouve une liste ol de définition
                 if($tete != ''){
+                    if (null != $tete->prev_sibling()) {
+                        if ($tete->prev_sibling()->find('.headword', 0)->getAttribute('lang') != 'en') continue;
+                    }
                     $str='';
                     $str2='';
                     $ref='';
@@ -337,23 +319,23 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                     // Cas particulier des Formes de verbes :
                     // - on détermine le verbe à l'infinitif et on crée un lien vers celui-ci
-                    if($naturesGram[$z] == "Forme de verbe"){
+                    if($naturesGram[$z] == "Verb" && null != $html3->find('.form-of-definition-link')){
                         $needLink = false;
                         $isPluriel = false;
-                        foreach($html3->find('a') as $p => $a){
+                        foreach($html3->find('.form-of-definition-link') as $p => $a){
                             $a->id = "complement_verbe_".$p;
                             $radical = $a->title;
                             if ($radical != $motWiki){
                                 $needLink = true;
                                 $a->href = "https://en.wiktionary.org/wiki/".$radical;
-                                $a->class = "link-perso click-def-complement";
                             }
                         }
                     }
 
                     // Cas particulier des autres formes :
                     // - on détermine si c'est le pluriel qui est défini : dans ce cas, on crée un lien vers le mot au singulier
-                    if($naturesGram[$z] != "Forme de verbe"){
+                    // TODO
+                    if($naturesGram[$z] != "Verb"){
                         $isPluriel = false;
                         $plurielTest = $html3->find('li', 0);
                         $text=strip_tags($plurielTest);
