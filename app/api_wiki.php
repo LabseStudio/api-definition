@@ -165,6 +165,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $genre = [];                // tableau de genre pour la classe "nom commun"
     $etymologies = [];          // étymologies du mot
     $plurals = [];              // les pluriels du mot
+    $pronunciations = [];       // les prononciations du mot (phoneme & audio url)
     /* ############################################################################################### */
 
     // Messsage si pas de page Wikitionnaire
@@ -261,6 +262,41 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                 }
 
+            }
+
+            // Prononciation
+            // On regarde si il y a des prononciations
+            if (null!=$html->find('#Prononciation', 0)) {
+                $section = $html->find('#Prononciation', 0)->parent()->next_sibling();
+                if (null!=$section) {
+                    // .audio-file, arg data-file
+                    $audios = $section->find('.audio-file');
+                    foreach ($audios as $el) {
+                        $file_name = $el->getAttribute('data-file');
+                        if (null!=$file_name) {
+                            $url = "https://fr.wiktionary.org/w/api.php?action=query&titles=Fichier:".$file_name."&prop=videoinfo&viprop=url&format=json";
+                            $req = curl_init($url);
+                            curl_setopt($req, CURLOPT_RETURNTRANSFER, 1);
+                            $response = curl_exec($req);
+                            $status = curl_getinfo($req, CURLINFO_HTTP_CODE);
+                            curl_close($req);
+                            if ($status == 200) {
+                                $json_response = json_decode($response, true);
+                                if (null!=$json_response) {
+                                    if (null!=$json_response["query"]["pages"]["-1"]["videoinfo"]) {
+                                        $pronunciations[] = [
+                                            "url" => $json_response["query"]["pages"]["-1"]["videoinfo"][0]["url"],
+                                            "credits" => $json_response["query"]["pages"]["-1"]["videoinfo"][0]["descriptionshorturl"]
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // https://fr.wiktionary.org/w/api.php?action=query&titles=File:LL-Q150_(fra)-WikiLucas00-c%E2%80%99est-%C3%A0-dire.wav&prop=videoinfo&viprop=url
+                    // resp.query.pages[].videoinfo[0].url
+                    // resp.query.pages[].videoinfo[0].descriptionshorturl
+                }
             }
             // ############################################################
             //      PLURIELS DU MOT
@@ -635,6 +671,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $data["nature"]=$naturesGram;
     $data["genre"]=$genre;
     $data["etymologies"]=$etymologies;
+    $data["pronunciations"]=$pronunciations;
     $data["plurals"]=$plurals;
     $data["natureDef"]=$resfinal;
 
