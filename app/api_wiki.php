@@ -439,8 +439,10 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                             }
 
                             // On ajoute l'exemple à la liste
+                            $content = clearTags($contenu)->innertext;
+                            if ('' == $content) continue;
                             $exemples[] = [
-                                "contenu" => clearTags($contenu)->innertext,
+                                "contenu" => $content,
                                 "sources" => $sources
                             ];
                         }
