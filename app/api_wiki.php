@@ -414,6 +414,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                             // Si le wiki propose d'ajouter un exemple, on passe
                             if (null != $li->find('a', 0)) {
                                 if ($li->find('a', 0) ->innertext == 'Ajouter un exemple') continue;
+                                if ($li->find('a', 0) ->innertext == 'Exemple d’utilisation') continue;
                             }
 
                             // On récupère le contenu de l'exemple (tout le contenu du li sans la source) puis la source (li.sources, sans le span.tiret)
