@@ -166,6 +166,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     $etymologies = [];          // étymologies du mot
     $plurals = [];              // les pluriels du mot
     $pronunciations = [];       // les prononciations du mot (phoneme & audio url)
+    $isPluriel = false;
     /* ############################################################################################### */
 
     // Messsage si pas de page Wikitionnaire
@@ -190,6 +191,13 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         if($nbNaturesGram != 0){
             // On récupère le texte des classes grammaticales
             foreach($html->find($sectionTitleQuery) as $v){
+                # It is an image, jumping to next node
+                if ($v->parent->next_sibling()->nodeName() == 'figure') {
+                    if (null==$v->parent->next_sibling()->next_sibling()->find('.headword', 0)) continue;
+                    if ($v->parent->next_sibling()->next_sibling()->find('.headword', 0)->getAttribute('lang') != 'en') continue;
+                    $naturesGram[] = $v->plaintext;
+                    continue;
+                }
                 if (null==$v->parent->next_sibling()->find('.headword', 0)) continue;
                 if ($v->parent->next_sibling()->find('.headword', 0)->getAttribute('lang') != 'en') continue;
                 $naturesGram[] = $v->plaintext;
