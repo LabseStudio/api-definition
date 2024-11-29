@@ -270,8 +270,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         foreach ($audios as $el) {
                             $file_name = $el->getAttribute('data-mwtitle');
                             if (null!=$file_name) {
-                                $url = "https://fr.wiktionary.org/w/api.php?action=query&titles=Fichier:".$file_name."&prop=videoinfo&viprop=url&format=json";
-                                $req = curl_init($url);
+                                $api_url = "https://fr.wiktionary.org/w/api.php?action=query&titles=Fichier:".$file_name."&prop=videoinfo&viprop=url&format=json";
+                                $req = curl_init($api_url);
                                 curl_setopt($req, CURLOPT_RETURNTRANSFER, 1);
                                 $response = curl_exec($req);
                                 $status = curl_getinfo($req, CURLINFO_HTTP_CODE);
