@@ -390,7 +390,6 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
 
                     // Cas particulier des autres formes :
                     // - on détermine si c'est le pluriel qui est défini : dans ce cas, on crée un lien vers le mot au singulier
-                    // TODO
                     if($naturesGram[$z] != "Verb"){
                         $isPluriel = false;
                         $plurielTest = $html3->find('li', 0);
@@ -398,7 +397,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                         $html3Tab = explode(" ", $text);
 
                         foreach($html3Tab as $mot){
-                            if($mot == "Pluriel" || $mot == "pluriel" || (strpos($text, "Féminin singulier") !== FALSE)){
+                            if($mot == "Plural" || $mot == "plural"){
                                 $linkSingulier = $html3->find('a', 0);
                                 $singulier = $linkSingulier->title;
                                 $linkSingulier->href = "https://en.wiktionary.org/wiki/".$singulier;
