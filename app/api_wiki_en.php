@@ -57,11 +57,11 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     }
 
     // Enlève tous les tags sauf les <i>, <b> <reference et <phoneme>
-    function clearTags($chaine) {
+    function clearTags($chaine, $deleteSources = true) {
 
         // On supprime les sources si c'est un exemple
         $sourcesEl = $chaine->find('.cited-source', 0);
-        if (null != $sourcesEl) {
+        if (null != $sourcesEl && $deleteSources) {
             $sourcesEl->outertext = '';
             $inner = $chaine->innertext;
             $chaine = new simple_html_dom();
@@ -93,7 +93,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
         $all_tags = array_filter($chaine->find('*'), "isBannedTag");
         // Récursive pour tout supprimer
         if (sizeof($all_tags) > 0) {
-            $chaine = clearTags($chaine);
+            $chaine = clearTags($chaine, $deleteSources);
         }
         // Juste avant on clean les tags restant de leurs propriétés inutiles
         return clearAttributes($chaine);
@@ -361,7 +361,7 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                                 foreach ($anchors as $a) {
                                     $a->outertext = $a->innertext;
                                 }
-                                $sources = str_replace(['<span class="tiret">', '</span>'], ['', ''], $sourcesEl->innertext);
+                                $sources = clearTags($sourcesEl, false)->innertext;
                             }
 
                             // On ajoute l'exemple à la liste
