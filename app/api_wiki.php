@@ -103,8 +103,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     function clearAttributes($chaine) {
         // Garder juste le mot dans le href
         // Pour cela on remplace les /wiki/ et autres urls par une chaine vide
-        $to_replace = ['wiki/', 'https://fr.wiktionary.org', '/'];
-        $to_replace_by = ['', '', ''];
+        $to_replace = ['wiki/', 'https://fr.wiktionary.org', '/', '//fr.wiktionary.org/wiki/'];
+        $to_replace_by = ['', '', '', ''];
 
         // On itère tous les tags
         foreach ($chaine->find('*') as $tag) {
@@ -308,8 +308,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
                 $rows = array_slice($table->find('tr'), -2, 2);
 
                 if (null != $rows) {
-                    $to_replace = ['<a href="/wiki/Annexe:Prononciation/fran%C3%A7ais" title="Annexe:Prononciation/français"><span class="API" title="Prononciation API">', '</span></a>', '<br/>', '<br>', '<b>', '</b>', '<i>', '</i>', '<a', '</a>'];
-                    $to_replace_by = ['<phoneme>', '</phoneme>', '', '', '', '', '', '', '<reference', '</reference>'];
+                    $to_replace = ['<a href="/wiki/Annexe:Prononciation/fran%C3%A7ais" title="Annexe:Prononciation/français"><span class="API" title="Prononciation API">', '<a rel="mw:WikiLink" href="//fr.wiktionary.org/wiki/Annexe:Prononciation/français" title="Annexe:Prononciation/français"><span class="API" title="Prononciation API">', '</span></a>', '<br/>', '<br>', '<b>', '</b>', '<i>', '</i>', '<a', '</a>'];
+                    $to_replace_by = ['<phoneme>', '<phoneme>', '</phoneme>', '', '', '', '', '', '', '<reference', '</reference>'];
                     foreach ($rows as $row) {
                         // Récupération singulier et pluriel et label si il y en a un
                         $columns = $row->find('td');
