@@ -103,8 +103,8 @@ if(isset($_POST['motWiki']) && $_POST['motWiki'] != ''){
     function clearAttributes($chaine) {
         // Garder juste le mot dans le href
         // Pour cela on remplace les /wiki/ et autres urls par une chaine vide
-        $to_replace = ['https://en.wikipedia.org/wiki/English_language', 'wiki/', 'https://en.wiktionary.org', 'https://en.wikipedia.org','/'];
-        $to_replace_by = ['', '', '', '', ''];
+        $to_replace = ['https://en.wikipedia.org/wiki/English_language', 'wiki/', 'https://en.wiktionary.org', 'https://en.wikipedia.org', '/' ,'//en.wikipedia.org/wiki/'];
+        $to_replace_by = ['', '', '', '', '', ''];
 
         // On itère tous les tags
         foreach ($chaine->find('*') as $tag) {
